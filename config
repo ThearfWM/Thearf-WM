@@ -1,0 +1,25 @@
+# RULES #
+/ Always use
+# MODIFIERS
+/ 1. ctrl
+/ 2. shift
+/ 3. caps_lock
+/ 4. super
+/ 5. alt
+# KEYS
+// Don't spell out letters, use the letter itself
+// Always use the lowercase version of the letter
+
+window_buffer = 6
+# HAS TO BE AN INTEGER
+// I prefer using 6 as mine, not very noticable but it still is there and it doesn't look crappy
+
+
+# LIST THEM WITH NO COMMAS, PARENTHESIS, OR OTHER SEPARATORS
+close_win = ctrl w
+refresh = ctrl shift r
+
+
+// You can also just put command names
+firefox = ctrl f
+konsole = alt shift t

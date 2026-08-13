@@ -1,0 +1,69 @@
+#![allow(irrefutable_let_patterns)]
+
+mod handlers;
+
+mod grabs;
+mod input;
+mod state;
+mod winit;
+
+use smithay::reexports::{calloop::EventLoop, wayland_server::Display};
+pub use state::Thearf;
+use std::env;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    init_logging();
+
+    let mut event_loop: EventLoop<Thearf> = EventLoop::try_new()?;
+
+    let display: Display<Thearf> = Display::new()?;
+
+    let mut state = Thearf::new(&mut event_loop, display);
+
+    // Open a Wayllibxkbcommon-develand/X11 window for our nested compositor
+    if std::env::args().any(|arg| arg == "--winit") {
+        crate::winit::init_winit(&mut event_loop, &mut state)?;
+    } else {
+        handlers::udev(&mut state)
+    }
+
+    // Set WAYLAND_DISPLAY to our socket name, so child processes connect to Thearf rather
+    // than the host compositor
+    unsafe { std::env::set_var("WAYLAND_DISPLAY", &state.socket_name) };
+
+    // Spawn a test client, that will run under Thearf
+    for _ in 0..3 {
+        spawn_client();
+    }
+
+
+
+    event_loop.run(None, &mut state, move |_| {
+        // Thearf is running
+    })?;
+
+    Ok(())
+}
+
+fn init_logging() {
+    if let Ok(env_filter) = tracing_subscriber::EnvFilter::try_from_default_env() {
+        tracing_subscriber::fmt().with_env_filter(env_filter).init();
+    } else {
+        tracing_subscriber::fmt().init();
+    }
+}
+
+fn spawn_client() {
+    let mut args = std::env::args().skip(1);
+    let flag = args.next();
+    let arg = args.next();
+
+    match (flag.as_deref(), arg) {
+        (Some("-c") | Some("--command"), Some(command)) => {
+            std::process::Command::new(command).spawn().ok();
+        }
+        _ => {
+            std::process::Command::new("konsole").spawn().ok();
+        }
+    }
+}

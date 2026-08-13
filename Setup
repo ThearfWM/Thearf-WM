@@ -1,0 +1,4 @@
+To set up the wm (in a nested window) you need to run the smallvil.sh script. The script will then download necessary packages and build the WM in ~/Documents/Rust/. To run the project after the script is done do: 'cargo run --release'.
+
+The project uses a config file located in ~/.config/smallvil. You can change keybingdings and add more functions in there. If you are not using KDE Plasma, you will need to change the terminal command to be something else.
+You also need to open ~/Documents/Rust/smallvil/src/main.rs at 61:40 and change "zsh" to the command to summon your terminal
