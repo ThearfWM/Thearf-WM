@@ -1,4 +1,4 @@
-use std::{ffi::OsString, sync::Arc, env::var, path::PathBuf};
+use std::{ffi::OsString, sync::Arc};
 
 use smithay::{
     desktop::{PopupManager, Space, Window, WindowSurfaceType, find_popup_root_surface},
@@ -23,26 +23,19 @@ use smithay::{
 };
 
 
-pub struct Drm {
-    pub session: Session,
-    pub primary_gpu: DrmNode,
-    pub all_gpus: GpuManager,
-}
 
-impl Drm {
-    pub fn device_added(node: DrmNode, path: PathBuf) {
-        None;
-    }
-}
-
+pub use crate::backend::drm::Drm;
 pub struct Thearf {
 
     // Things
     pub socket_name: OsString,
 
     // Looping and Window Management
-    pub space: Space<Window>,
+    pub workspace: Vec<Space<Window>>,
+    pub curr_workspace: usize,
     pub loop_signal: LoopSignal,
+    pub start_time: std::time::Instant,
+    pub display_handle: DisplayHandle,
 
     // Thearf State
     pub compositor_state: CompositorState,
@@ -52,7 +45,6 @@ pub struct Thearf {
     pub seat_state: SeatState<Thearf>,
     pub data_device_state: DataDeviceState,
     pub popups: PopupManager,
-    pub display: Display,
 
     // Seat
     pub seat: Seat<Self>,
@@ -62,12 +54,14 @@ pub struct Thearf {
     pub cfg_file: String,
 
     // Drm
-    pub drm: Drm
+    pub drm: Option<Drm>
 }
 
 impl Thearf {
     pub fn new(event_loop: &mut EventLoop<Self>, display: Display<Self>) -> Self {
         let start_time = std::time::Instant::now();
+        let curr_workspace: usize = 0_usize;
+        let dh = display.handle();
 
         // Here we initialize implementations of some wayland protocols
         // Some of them require us to implement traits on the Thearf state,
@@ -101,7 +95,7 @@ impl Thearf {
         //
         // Windows get a position and stacking order through mapping.
         // Outputs become views of a part of the Space and can be rendered via Space::render_output.
-        let space = Space::default();
+        let workspace = vec![Space::default()];
 
         // Setup a wayland socket that will be used to accept clients
         let socket_name = Self::init_wayland_listener(display, event_loop);
@@ -115,13 +109,13 @@ impl Thearf {
         let home = std::env::var("HOME").expect("HOME not set.");
         let cfg_file = format!("{home}/.config/thearf/config").to_string();
 
-        let session = LibSeatSession::new();
-        
-        let drm = None;
-        
+        let drm: Option<Drm> = None;        
         Self {
             socket_name,
-            space,
+            start_time,
+            display_handle: dh,
+            workspace,
+            curr_workspace,
             loop_signal,
             compositor_state,
             xdg_shell_state,
@@ -130,12 +124,18 @@ impl Thearf {
             seat_state,
             data_device_state,
             popups,
-            display,
             seat,
             win_order,
             cfg_file,
             drm,
         }
+    }
+
+    pub fn space(&self) -> &Space<Window> {
+        &self.workspace[self.curr_workspace]
+    }
+    pub fn space_mut(&mut self) -> &mut Space<Window> {
+        &mut self.workspace[self.curr_workspace]
     }
 
     pub fn retile(&mut self) {
@@ -154,14 +154,17 @@ impl Thearf {
             }
         }
 
-        let output = self.space.outputs().next().unwrap();
-        let screen_geo = self.space.output_geometry(output).unwrap();
+        let screen_geo = {
+            let space = self.space();
+            let output = space.outputs().next().unwrap();
+            space.output_geometry(output).unwrap()
+        };
 
         let win_count = self.win_order.len();
 
         for win_num in 0..win_count {
-            let win = self.win_order.get(win_num as usize).unwrap();
-            let mut win_geo = self.space.element_geometry(&win).unwrap();
+            let win = self.win_order.get(win_num).unwrap().clone();
+            let mut win_geo = self.space().element_geometry(&win).unwrap();
 
             let mut posx = screen_geo.loc.x;
             let mut posy = screen_geo.loc.y;
@@ -188,7 +191,7 @@ impl Thearf {
             });
             win.toplevel().unwrap().send_configure();
 
-            self.space.map_element(win.clone(), (posx, posy), false);
+            self.space_mut().map_element(win.clone(), (posx, posy), false);
         }
     }
 
@@ -232,7 +235,7 @@ impl Thearf {
     }
 
     pub fn surface_under(&self, pos: Point<f64, Logical>) -> Option<(WlSurface, Point<f64, Logical>)> {
-        self.space.element_under(pos).and_then(|(window, location)| {
+        self.space().element_under(pos).and_then(|(window, location)| {
             window
                 .surface_under(pos - location.to_f64(), WindowSurfaceType::ALL)
                 .map(|(s, p)| (s, (p + location).to_f64()))

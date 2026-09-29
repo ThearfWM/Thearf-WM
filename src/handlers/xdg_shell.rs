@@ -29,7 +29,7 @@ impl XdgShellHandler for Thearf {
     fn new_toplevel(&mut self, surface: ToplevelSurface) {
         let window = Window::new_wayland_window(surface);
         self.win_order.push(window.clone());
-        self.space.map_element(window, (0, 0), false);
+        self.space_mut().map_element(window, (0, 0), false);
         Thearf::retile(self);
     }
 
@@ -64,12 +64,12 @@ impl XdgShellHandler for Thearf {
             let pointer = seat.get_pointer().unwrap();
 
             let window = self
-                .space
+                .space()
                 .elements()
                 .find(|w| w.toplevel().unwrap().wl_surface() == wl_surface)
                 .unwrap()
                 .clone();
-            let initial_window_location = self.space.element_location(&window).unwrap();
+            let initial_window_location = self.space().element_location(&window).unwrap();
 
             let grab = MoveSurfaceGrab {
                 start_data,
@@ -96,12 +96,12 @@ impl XdgShellHandler for Thearf {
             let pointer = seat.get_pointer().unwrap();
 
             let window = self
-                .space
+                .space()
                 .elements()
                 .find(|w| w.toplevel().unwrap().wl_surface() == wl_surface)
                 .unwrap()
                 .clone();
-            let initial_window_location = self.space.element_location(&window).unwrap();
+            let initial_window_location = self.space().element_location(&window).unwrap();
             let initial_window_size = window.geometry().size;
 
             surface.with_pending_state(|state| {
@@ -194,16 +194,16 @@ impl Thearf {
             return;
         };
         let Some(window) = self
-            .space
+            .space()
             .elements()
             .find(|w| w.toplevel().unwrap().wl_surface() == &root)
         else {
             return;
         };
 
-        let output = self.space.outputs().next().unwrap();
-        let output_geo = self.space.output_geometry(output).unwrap();
-        let window_geo = self.space.element_geometry(window).unwrap();
+        let output = self.space().outputs().next().unwrap();
+        let output_geo = self.space().output_geometry(output).unwrap();
+        let window_geo = self.space().element_geometry(window).unwrap();
 
         // The target geometry for the positioner should be relative to its parent's geometry, so
         // we will compute that here.

@@ -1,5 +1,5 @@
 [package]
-name = "smallvil"
+name = "thearf"
 version = "0.1.0"
 edition = "2024"
 
@@ -7,14 +7,26 @@ edition = "2024"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 bitflags = "2.2.1"
 xkbcommon = "0.9.0"
+tracing = "0.1.37"
+thiserror = "2.0.12"
+smithay-drm-extras = { git = "https://github.com/Smithay/smithay.git", rev = "0a29aecf9e07a2227712ab470b0ab0ee56752272" }
 
 [dependencies.smithay]
 git = "https://github.com/Smithay/smithay.git"
 rev = "0a29aecf9e07a2227712ab470b0ab0ee56752272"
 default-features = false
 features = [
+    "backend_libinput",
+    "backend_udev",
+    "backend_drm",
+    "backend_gbm",
+    "backend_egl",
+    "backend_session_libseat",
+    "renderer_gl",
+    "renderer_multi",
     "backend_winit",
     "wayland_frontend",
+    "use_system_lib",
     "desktop",
 ]
 

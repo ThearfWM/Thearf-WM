@@ -39,7 +39,7 @@ pub fn init_winit(
     output.change_current_state(Some(mode), Some(Transform::Flipped180), None, Some((0, 0).into()));
     output.set_preferred(mode);
 
-    state.space.map_output(&output, (0, 0));
+    state.space_mut().map_output(&output, (0, 0));
 
     let mut damage_tracker = OutputDamageTracker::from_output(&output);
 
@@ -74,7 +74,7 @@ pub fn init_winit(
                         &mut framebuffer,
                         1.0,
                         0,
-                        [&state.space],
+                        [state.space()],
                         &[],
                         &mut damage_tracker,
                         [0.1, 0.1, 0.1, 1.0],
@@ -83,7 +83,7 @@ pub fn init_winit(
                 }
                 backend.submit(Some(&[damage])).unwrap();
 
-                state.space.elements().for_each(|window| {
+                state.space().elements().for_each(|window| {
                     window.send_frame(
                         &output,
                         state.start_time.elapsed(),
@@ -92,7 +92,7 @@ pub fn init_winit(
                     )
                 });
 
-                state.space.refresh();
+                state.space_mut().refresh();
                 state.popups.cleanup();
                 let _ = state.display_handle.flush_clients();
 

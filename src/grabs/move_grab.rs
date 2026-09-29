@@ -46,7 +46,7 @@ impl PointerGrab<Thearf> for MoveSurfaceGrab {
 
         let delta = event.location - self.start_data.location;
         let new_location = self.initial_window_location.to_f64() + delta;
-        data.space
+        data.space_mut()
             .map_element(self.window.clone(), new_location.to_i32_round(), true);
     }
 
@@ -75,9 +75,9 @@ impl PointerGrab<Thearf> for MoveSurfaceGrab {
         if !handle.current_pressed().contains(&BTN_LEFT) {
             // No more buttons are pressed, release the grab.
             handle.unset_grab(self, data, event.serial, event.time, true);
-            let final_loc: Point<i32, Logical> = data.space.element_location(&self.window).unwrap();
-            let output = data.space.outputs().next().unwrap();
-            let screen_geo = data.space.output_geometry(output).unwrap();
+            let final_loc: Point<i32, Logical> = data.space().element_location(&self.window).unwrap();
+            let output = data.space().outputs().next().unwrap();
+            let screen_geo = data.space().output_geometry(output).unwrap();
 
 
             if final_loc.x < screen_geo.loc.x+(screen_geo.size.w/4) {

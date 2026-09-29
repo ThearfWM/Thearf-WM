@@ -172,8 +172,8 @@ impl PointerGrab<Thearf> for ResizeSurfaceGrab {
                 win_mult = 2;
             } 
 
-            let output = data.space.outputs().next().unwrap();
-            let screen_geo = data.space.output_geometry(output).unwrap();
+            let output = data.space().outputs().next().unwrap();
+            let screen_geo = data.space().output_geometry(output).unwrap();
 
             if self.last_window_size.h <= win_mult*screen_geo.size.h/((data.win_order.len()-1) as i32) {
                 data.win_order.push(data.win_order[0].clone());

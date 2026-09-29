@@ -33,7 +33,7 @@ impl CompositorHandler for Thearf {
                 root = parent;
             }
             if let Some(window) = self
-                .space
+                .space()
                 .elements()
                 .find(|w| w.toplevel().unwrap().wl_surface() == &root)
             {
@@ -41,8 +41,9 @@ impl CompositorHandler for Thearf {
             }
         };
 
-        xdg_shell::handle_commit(&mut self.popups, &self.space, surface);
-        resize_grab::handle_commit(&mut self.space, surface);
+        let workspace = self.curr_workspace;
+        xdg_shell::handle_commit(&mut self.popups, &self.workspace[workspace], surface);
+        resize_grab::handle_commit(self.space_mut(), surface);
     }
 }
 

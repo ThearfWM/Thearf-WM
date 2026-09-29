@@ -20,7 +20,7 @@ use smithay::desktop::{Space, Window};
 use crate::state::Thearf;
 
 fn bind_to_cmd(func: String, thearf: &mut Thearf) {
-    let window = thearf.space.elements().last();
+    let window = thearf.space().elements().last();
     if window.is_none() {
         return;
     }
@@ -144,9 +144,9 @@ impl Thearf {
             }
             InputEvent::PointerMotion { .. } => {}
             InputEvent::PointerMotionAbsolute { event, .. } => {
-                let output = self.space.outputs().next().unwrap();
+                let output = self.space().outputs().next().unwrap();
 
-                let output_geo = self.space.output_geometry(output).unwrap();
+                let output_geo = self.space().output_geometry(output).unwrap();
 
                 let pos = event.position_transformed(output_geo.size) + output_geo.loc.to_f64();
 
@@ -179,21 +179,21 @@ impl Thearf {
 
                 if ButtonState::Pressed == button_state && !pointer.is_grabbed() {
                     if let Some((window, _loc)) = self
-                        .space
+                        .space()
                         .element_under(pointer.current_location())
                         .map(|(w, l)| (w.clone(), l))
                     {
-                        self.space.raise_element(&window, true);
+                        self.space_mut().raise_element(&window, true);
                         keyboard.set_focus(
                             self,
                             Some(window.toplevel().unwrap().wl_surface().clone()),
                             serial,
                         );
-                        self.space.elements().for_each(|window| {
+                        self.space().elements().for_each(|window| {
                             window.toplevel().unwrap().send_pending_configure();
                         });
                     } else {
-                        self.space.elements().for_each(|window| {
+                        self.space().elements().for_each(|window| {
                             window.set_activated(false);
                             window.toplevel().unwrap().send_pending_configure();
                         });

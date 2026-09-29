@@ -1,6 +1,7 @@
 #![allow(irrefutable_let_patterns)]
 
 mod handlers;
+mod backend;
 
 mod grabs;
 mod input;
@@ -24,7 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if std::env::args().any(|arg| arg == "--winit") {
         crate::winit::init_winit(&mut event_loop, &mut state)?;
     } else {
-        handlers::udev(&mut state)
+        backend::udev(&mut state, &mut event_loop)?
     }
 
     // Set WAYLAND_DISPLAY to our socket name, so child processes connect to Thearf rather
